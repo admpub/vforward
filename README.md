@@ -1,131 +1,87 @@
-# vforward [![Build Status](https://travis-ci.org/456vv/vforward.svg?branch=master)](https://travis-ci.org/456vv/vforward)
-go/golang TCP/UDP port forwarding，端口转发，主动连接，被动连接，大多用于内网端口反弹。
+# vconnpool [![Build Status](https://travis-ci.org/456vv/vconnpool.svg?branch=master)](https://travis-ci.org/456vv/vconnpool)
+go/golang TCP connection pool, 可以连接复用，使用方法和 net.Dialer 是相同的，所以比较方便调用
 <br/>
-最近更新20160821：<a href="/v1/update.txt">update.txt</a>
+最近更新20160912：<a href="/v1/update.txt">update.txt</a>
 <br/>
-已编译好的二进制文件下载：<a href="../../raw/master/v1/test/bin/vforward.zip">vforward.zip</a>
-<br/>
-D2D 命令行：
-====================
-内网开放端口，外网无法访问的情况下。内网使用D2D主动连接外网端口。以便外网发来数据转发到内网端口中去。<br/>
-####工作原理：
-    |A内网|  ←  |A内网-D2D|  →  |B外网|（1，B收到[A内网-D2D]发来连接）
-    |A内网|  ←  |A内网-D2D|  ←  |B外网|（2，B然后向[A内网-D2D]回应数据，数据将转发到A内网。）
-    |A内网|  →  |A内网-D2D|  →  |B外网|（3，A内网收到数据再发出数据，由[A内网-D2D]转发到B外网。）
-
-####命令行：
-    -ARemote string
-          A端远程请求连接地址 (format "12.13.14.15:123")
-    -ALocal string
-          A端本地发起连接地址 (default "0.0.0.0")
-    -BRemote string
-          B端远程请求连接地址 (format "22.23.24.25:234")
-    -BLocal string
-          B端本地发起连接地址 (default "0.0.0.0")
-    -KeptIdeConn int
-          保持一方连接数量，以备快速互相连接。 (default 2)
-    -MaxConn int
-          限制连接最大的数量 (default 500)
-    -Network string
-          网络地址类型 (default "tcp")
-    -ReadBufSize int
-          交换数据缓冲大小。单位：字节 (default 4096)
-    -Timeout duration
-          转发连接时候，请求远程连接超时。单位：ns, us, ms, s, m, h (default 5s)
-    -TryConnTime duration
-          尝试或发起连接时间，可能一方不在线，会一直尝试连接对方。单位：ns, us, ms, s, m, h (default 500ms)
-
-L2D
-====================
-是在内网或公网都可以使用，配合D2D或L2L使用功能更自由。L2D功能主要是转发连接（端口转发）。<br/>
-####工作原理：
-    |A端口|  →  |L2D转发|  →  |B端口|（1，B收到A发来数据）
-    |A端口|  ←  |L2D转发|  ←  |B端口|（2，然后向A回应数据）
-    |A端口|  →  |L2D转发|  →  |B端口|（3，B然后再收到A数据）
-
-####命令行：
-    -FromLocal string
-          转发请求的源地址 (default "0.0.0.0")
-    -Listen string
-          本地网卡监听地址 (format "0.0.0.0:123")
-    -MaxConn int
-          限制连接最大的数量 (default 500)
-    -Network string
-          网络地址类型 (default "tcp")
-    -ReadBufSize int
-          交换数据缓冲大小。单位：字节 (default 4096)
-    -Timeout duration
-          转发连接时候，请求远程连接超时。单位：ns, us, ms, s, m, h (default 5s)
-    -ToLemote string
-          转发请求的目地址 (format "22.23.24.25:234")
-
-L2L 命令行：
-====================
-是在公网主机上面监听两个TCP端口，由两个内网客户端连接。 L2L使这两个连接进行交换数据，达成内网到内网通道。 注意：1）双方必须主动连接公网L2L。2）不支持UDP协议。<br/>
-####工作原理：
-    |A内网|  →  |公网-D2D|  ←  |B内网|（1，A和B同时连接[公网-D2D]，由[公网-D2D]互相桥接A和B这两个连接）
-    |A内网|  ←  |公网-D2D|  ←  |B内网|（2，B 往 A 发送数据）
-    |A内网|  →  |公网-D2D|  →  |B内网|（3，A 往 B 发送数据）
-
-####命令行：
-    -ALocal string
-          A本地监听网卡IP地址 (format "12.13.14.15:123")
-    -BLocal string
-          B本地监听网卡IP地址 (format "22.23.24.25:234")
-    -KeptIdeConn int
-          保持一方连接数量，以备快速互相连接。 (default 2)
-    -MaxConn int
-          限制连接最大的数量 (default 500)
-    -Network string
-          网络地址类型 (default "tcp")
-    -ReadBufSize int
-          交换数据缓冲大小。单位：字节 (default 4096)
-    -Timeout duration
-          转发连接时候，请求远程连接超时。单位：ns, us, ms, s, m, h (default 5s)
-
 列表：
 ====================
-    const DefaultReadBufSize int = 4096                                             // 默认交换数据缓冲大小
-    type Addr struct {                                                      // 地址
-        Network       string                                                        // 网络类型
-        Local, Remote net.Addr                                                      // 本地，远程
+    var DefaultReadBufSize int = 4096                                               // 默认读取时的缓冲区大小（单位字节）
+    type Dialer interface {                                                 // net.Dialer 接口
+        Dial(network, address string) (net.Conn, error)                             // 拨号
     }
-    type D2D struct {                                                       // D2D（内网to内网）
-        TryConnTime time.Duration                                                   // 尝试或发起连接时间，可能一方不在线，会一直尝试连接对方。
-        MaxConn     int                                                             // 限制连接最大的数量
-        KeptIdeConn int                                                             // 保持一方连接数量，以备快速互相连接。
-        Timeout     time.Duration                                                   // 发起连接超时
-        ReadBufSize int                                                             // 交换数据缓冲大小
-        ErrorLog    *log.Logger                                                     // 日志
+    type Conn interface{                                                    // 连接接口
+        net.Conn                                                                    // net连接接口
+        Discard() error                                                             // 废弃（这条连接不再回收）
     }
-        func (dd *D2D) Close() error                                                // 关闭
-        func (dd *D2D) Transport(a, b *Addr) (*D2DSwap, error)                      // 建立连接
-    type D2DSwap struct {}                                                   // D2D交换数据
-        func (dds *D2DSwap) Close() error                                           // 关闭
-        func (dds *D2DSwap) ConnNum() int                                           // 当前连接数
-        func (dds *D2DSwap) Swap() error                                            // 开始交换
-    type L2D struct {                                                        // L2D（端口转发）
-        MaxConn     int                                                             // 限制连接最大的数量
-        ReadBufSize int                                                             // 交换数据缓冲大小
-        Timeout     time.Duration                                                   // 发起连接超时
-        ErrorLog    *log.Logger                                                     // 日志
+    type ConnPool struct {                                                  // 连接池
+        net.Dialer                                                                  // 拨号
+        IdeConn     int                                                             // 空闲连接数，0为不复用连接
+        MaxConn     int                                                             // 最大连接数，0为无限制连接
     }
-        func (ld *L2D) Close() error                                                // 关闭
-        func (ld *L2D) Transport(raddr, laddr *Addr) (*L2DSwap, error)              // 建立连接
-    type L2DSwap struct {}                                                    // L2D交换数据
-        func (lds *L2DSwap) Close() error                                           // 关闭
-        func (lds *L2DSwap) ConnNum() int                                           // 当前连接数
-        func (lds *L2DSwap) Swap() error                                            // 开始交换
-    type L2L struct {                                                         // L2L（内网to内网）
-        MaxConn     int                                                             // 限制连接最大的数量
-        KeptIdeConn int                                                             // 保持一方连接数量，以备快速互相连接。
-        ReadBufSize int                                                             // 交换数据缓冲大小
-        ErrorLog    *log.Logger                                                     // 日志
-    }
-        func (ll *L2L) Close() error                                                // 关闭
-        func (ll *L2L) Transport(aaddr, baddr *Addr) (*L2LSwap, error)              // 建立连接
-    type L2LSwap struct {}                                                    // L2L交换数据
-        func (lls *L2LSwap) Close() error                                           // 关闭
-        func (lls *L2LSwap) ConnNum() int                                           // 当前连接数
-        func (lls *L2LSwap) Swap() error                                            // 开始交换
+        func (cp *ConnPool) Dial(network, address string) (net.Conn, error)         // 拨号,如果 address 参数是host域名，.Get(...)将无法读取到连接。请再次使用 .Dial(...) 来读取。
+        func (cp *ConnPool) DialContext(ctx context.Context, network, address string) (net.Conn, error) //拨号（支持上下文）,如果 address 参数是host域名，.Get(...)将无法读取到连接。请再次使用 .Dial(...) 来读取。
+        func (cp *ConnPool) Add(addr net.Addr, conn net.Conn) error                 // 增加连接
+        func (cp *ConnPool) Get(addr net.Addr) (net.Conn, error)                    // 读取连接，读取出来的连接不会自动回收，需要调用 .Add(...) 收入
+        func (cp *ConnPool) ConnNum() int                                           // 当前连接数量
+        func (cp *ConnPool) ConnNumIde(network, address string) int                 // 当前连接数量(空闲)
+        func (cp *ConnPool) CloseIdleConnections()                                  // 关闭空闲连接
+        func (cp *ConnPool) Close() error                                           // 关闭连接池
 <br/>
+使用方法：
+====================
+例1：
+
+    func main(){
+        cp := &ConnPool{
+            IdeConn:5,
+            MaxConn:2,
+        }
+        defer cp.Close()
+        conn, err := cp.Dial("tcp", "www.baidu.com:80")
+        fmt.Println(conn, err)
+    }
+
+例2：
+
+    func main(){
+        cp := &ConnPool{
+            IdeConn:5,
+            MaxConn:2,
+        }
+        defer cp.Close()
+        conn, err := net.Dial("tcp", "www.baidu.com:80")
+        fmt.Println(conn, err)
+        err = cp.Add(conn.RemoteAddr(), conn)
+        fmt.Println(err)
+        conn, err = cp.Get(conn.RemoteAddr())
+        fmt.Println(conn, err)
+    }
+
+例3：
+
+    func Test_ConnPool_5(t *testing.T){
+        cp := &ConnPool{
+            IdeConn:5,
+            MaxConn:2,
+        }
+        defer cp.Close()
+        conn, err := cp.Dial("tcp", "www.baidu.com:80")
+        if err != nil {t.Fatal(err)}
+        conn.Close()
+
+        conn, err = cp.Dial("tcp", "www.baidu.com:80")
+        if err != nil {t.Fatal(err)}
+        c, ok := conn.(Conn)
+        if !ok {
+            t.Fatal("不支持转换为 Conn 接口")
+        }
+        if cp.ConnNum() != 1 {
+            t.Fatalf("池里的连接数量不符，返回为：%d，预设为：1", cp.ConnNum())
+        }
+        c.Discard()
+        c.Close()
+        if cp.ConnNum() != 0 {
+            t.Fatalf("池里的连接数量不符，返回为：%d，预设为：0", cp.ConnNum())
+        }
+    }
+
