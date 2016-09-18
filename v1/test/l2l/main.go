@@ -4,7 +4,6 @@ import (
 	"github.com/456vv/vforward/v1"
     "flag"
     "net"
-    "time"
     "log"
     "fmt"
 )
@@ -12,13 +11,12 @@ var fNetwork = flag.String("Network", "tcp", "网络地址类型")
 var fALocal = flag.String("ALocal", "", "A本地监听网卡IP地址 (format \"12.13.14.15:123\")")
 var fBLocal = flag.String("BLocal", "", "B本地监听网卡IP地址 (format \"22.23.24.25:234\")")
 
-var fTimeout = flag.Duration("Timeout", time.Second*5, "转发连接时候，请求远程连接超时。单位：ns, us, ms, s, m, h")
 var fMaxConn = flag.Int("MaxConn", 500, "限制连接最大的数量")
 var fKeptIdeConn = flag.Int("KeptIdeConn", 2, "保持一方连接数量，以备快速互相连接。")
 var fReadBufSize = flag.Int("ReadBufSize", 4096, "交换数据缓冲大小。单位：字节")
 
 
-//commandline:l2l-main.exe -ALocal 127.0.0.1:1201 -BLocal 127.0.0.1:1202 -Network d
+//commandline:l2l-main.exe -ALocal 127.0.0.1:1201 -BLocal 127.0.0.1:1202 -Network tcp
 func main(){
     flag.Parse()
     if flag.NFlag() == 0 {
