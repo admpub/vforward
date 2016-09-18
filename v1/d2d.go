@@ -10,6 +10,7 @@ import (
     "github.com/456vv/vconnpool/v1"
     "github.com/456vv/vmap/v1"
     "sync"
+    "context"
 )
 
 //D2DSwap 数据交换
@@ -204,8 +205,16 @@ func (dd *D2D) bGetConn() (net.Conn, error) {
 }
 
 func (dd *D2D) dial(cp *vconnpool.ConnPool, addr *Addr){
-    netDialer := net.Dialer{LocalAddr: addr.Local, Timeout: dd.Timeout}
-    conn, err := netDialer.Dial(addr.Network, addr.Remote.String())
+    netDialer := net.Dialer{LocalAddr: addr.Local}
+
+    ctx := context.Background()
+    var cancel context.CancelFunc
+    if dd.Timeout != 0 {
+        ctx, cancel = context.WithTimeout(ctx, dd.Timeout)
+        defer cancel()
+    }
+
+    conn, err := netDialer.DialContext(ctx, addr.Network, addr.Remote.String())
     if err != nil {
         return
     }

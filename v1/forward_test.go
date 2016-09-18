@@ -9,7 +9,8 @@ import (
     "log"
     "os"
 )
-//如果测试出现错误提示，可能是你的电脑响应速度没跟上。由于关闭网络需要一段时间，所以我设置了延时。
+//如果测试出现错误提示，可能是你的电脑响应速度没跟上。
+//由于关闭网络需要一段时间，所以我设置了延时。
 
 
 func Test_D2D_0(t *testing.T){
@@ -63,6 +64,7 @@ func Test_D2D_0(t *testing.T){
     //客户端
     dd := &D2D{
         TryConnTime: time.Millisecond,
+        Timeout: time.Second*3,
         MaxConn:5,
         KeptIdeConn:4,
         ReadBufSize:1024,

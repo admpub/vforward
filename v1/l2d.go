@@ -8,6 +8,7 @@ import (
     "time"
     "log"
     "github.com/456vv/vmap/v1"
+    "context"
 )
 
 //L2DSwap 数据交换
@@ -41,8 +42,16 @@ func (lds *L2DSwap) ConnNum() int {
 }
 
 func (lds *L2DSwap) connTCP(lconn net.Conn) {
-    netDialer := net.Dialer{LocalAddr: lds.raddr.Local, Timeout: lds.ld.Timeout}
-    rconn, err := netDialer.Dial(lds.raddr.Network, lds.raddr.Remote.String())
+    netDialer := net.Dialer{LocalAddr: lds.raddr.Local}
+
+    ctx := context.Background()
+    var cancel context.CancelFunc
+    if lds.ld.Timeout != 0 {
+        ctx, cancel = context.WithTimeout(ctx, lds.ld.Timeout)
+        defer cancel()
+    }
+
+    rconn, err := netDialer.DialContext(ctx, lds.raddr.Network, lds.raddr.Remote.String())
     if err != nil {
         lds.currUseConn-=2
         //远程连接不通，关闭请求连接
