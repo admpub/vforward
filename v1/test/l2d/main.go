@@ -14,13 +14,13 @@ var fNetwork = flag.String("Network", "tcp", "网络地址类型")
 var fListen = flag.String("Listen", "", "本地网卡监听地址 (format \"0.0.0.0:123\")")
 
 var fFromLocal = flag.String("FromLocal", "0.0.0.0", "转发请求的源地址")
-var fToLemote = flag.String("ToLemote", "", "转发请求的目地址 (format \"22.23.24.25:234\")")
+var fToRemote = flag.String("ToRemote", "", "转发请求的目地址 (format \"22.23.24.25:234\")")
 
 var fTimeout = flag.Duration("Timeout", time.Second*5, "转发连接时候，请求远程连接超时。单位：ns, us, ms, s, m, h")
 var fMaxConn = flag.Int("MaxConn", 500, "限制连接最大的数量")
 var fReadBufSize = flag.Int("ReadBufSize", 4096, "交换数据缓冲大小。单位：字节")
 
-//commandline:l2d-main.exe -Listen 127.0.0.1:1201 -ToLemote 127.0.0.1:1202 -Network tcp
+//commandline:l2d-main.exe -Listen 127.0.0.1:1201 -ToRemote 127.0.0.1:1202 -Network tcp
 func main(){
     flag.Parse()
     if flag.NFlag() == 0 {
@@ -28,8 +28,8 @@ func main(){
         return
     }
     var err error
-    if *fListen == "" || *fToLemote == "" {
-        log.Printf("地址未填，本地监听地址 %q, 转发到远程地址 %q", *fListen, *fToLemote)
+    if *fListen == "" || *fToRemote == "" {
+        log.Printf("地址未填，本地监听地址 %q, 转发到远程地址 %q", *fListen, *fToRemote)
         return
     }
 
@@ -42,7 +42,7 @@ func main(){
                 log.Println(err)
                 return
             }
-            dialIP, err := net.ResolveTCPAddr(*fNetwork, *fToLemote)
+            dialIP, err := net.ResolveTCPAddr(*fNetwork, *fToRemote)
             if err != nil {
                 log.Println(err)
                 return
@@ -55,7 +55,7 @@ func main(){
                 log.Println(err)
                 return
             }
-            dialIP, err := net.ResolveUDPAddr(*fNetwork, *fToLemote)
+            dialIP, err := net.ResolveUDPAddr(*fNetwork, *fToRemote)
             if err != nil {
                 log.Println(err)
                 return
