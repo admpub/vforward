@@ -56,7 +56,7 @@ L2D
           交换数据缓冲大小。单位：字节 (default 4096)
     -Timeout duration
           转发连接时候，请求远程连接超时。单位：ns, us, ms, s, m, h (default 5s)
-    -ToLemote string
+    -ToRemote string
           转发请求的目地址 (format "22.23.24.25:234")
 
 L2L 命令行：
